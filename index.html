@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="bg">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Пътешествието на Капчо - Кръговратът на водата</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts for child-friendly typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;600;700&family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        body {
+            font-family: 'Fredoka', 'Nunito', sans-serif;
+            user-select: none;
+            -webkit-user-select: none;
+            touch-action: manipulation;
+        }
+
+        .drop-shadow-glow {
+            filter: drop-shadow(0px 0px 14px rgba(59, 130, 246, 0.7));
+        }
+
+        .drop-shadow-sun {
+            filter: drop-shadow(0px 0px 22px rgba(251, 191, 36, 0.9));
+        }
+
+        @keyframes floatSlow {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-12px) rotate(3deg); }
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); filter: brightness(1); }
+            50% { transform: scale(1.06); filter: brightness(1.2); }
+        }
+
+        @keyframes raindropFall {
+            0% { transform: translateY(0) scaleY(1); opacity: 1; }
+            85% { opacity: 1; }
+            100% { transform: translateY(320px) scaleY(1.3); opacity: 0; }
+        }
+
+        @keyframes steamRise {
+            0% { transform: translateY(0) scale(0.8); opacity: 0.9; }
+            50% { opacity: 0.6; }
+            100% { transform: translateY(-180px) scale(1.4); opacity: 0; }
+        }
+
+        @keyframes bounceSoft {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .animate-float {
+            animation: floatSlow 3.8s ease-in-out infinite;
+        }
+
+        .animate-pulse-glow {
+            animation: pulseGlow 2.5s infinite ease-in-out;
+        }
+
+        .animate-bounce-soft {
+            animation: bounceSoft 2s infinite ease-in-out;
+        }
+
+        .steam-bubble {
+            animation: steamRise 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+        }
+
+        .glass-card {
+            background: rgba(255, 255, 255, 0.88);
+            backdrop-filter: blur(12px);
+            border: 2px solid rgba(255, 255, 255, 0.7);
+        }
+
+        #confettiCanvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 50;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-b from-sky-300 via-blue-200 to-amber-100 min-h-screen flex flex-col items-center justify-between p-2 sm:p-4 overflow-x-hidden text-slate-800">
+
+    <header class="w-full max-w-4xl glass-card rounded-2xl p-3 mb-3 shadow-lg flex flex-wrap items-center justify-between gap-2 z-20">
+        <div class="flex items-center gap-3">
+            <div class="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white text-xl shadow-md font-bold">
+                💧
+            </div>
+            <div>
+                <h1 class="text-base sm:text-xl font-extrabold text-blue-900 leading-tight">Пътешествието на Капчо</h1>
+                <p class="text-xs text-blue-700 font-bold" id="levelSubtitle">Начало на приключението</p>
+            </div>
+        </div>
+
+        <!-- Progress Tracker -->
+        <div class="flex items-center gap-2 sm:gap-4 flex-grow max-w-xs mx-auto sm:mx-0">
+            <div class="w-full bg-blue-100 rounded-full h-4 overflow-hidden border border-blue-300 shadow-inner">
+                <div id="progressBar" class="bg-gradient-to-r from-cyan-400 to-blue-600 h-full w-[0%] transition-all duration-500 rounded-full"></div>
+            </div>
+            <span id="levelStepText" class="text-xs font-black text-blue-800 whitespace-nowrap">0 / 4</span>
+        </div>
+
+        <!-- Badges & Sound Toggle -->
+        <div class="flex items-center gap-2">
+            <div id="badgeContainer" class="flex gap-1">
+                <span title="Значка: Откривател" class="text-xl opacity-30 transition-all duration-300" id="badge1">☀️</span>
+                <span title="Значка: Облакостроител" class="text-xl opacity-30 transition-all duration-300" id="badge2">☁️</span>
+                <span title="Значка: Майстор на дъжда" class="text-xl opacity-30 transition-all duration-300" id="badge3">🌧️</span>
+                <span title="Значка: Пазител на кръговрата" class="text-xl opacity-30 transition-all duration-300" id="badge4">🏆</span>
+            </div>
+            <button id="soundToggleBtn" onclick="toggleSound()" class="w-9 h-9 bg-white hover:bg-slate-100 text-blue-600 rounded-xl shadow flex items-center justify-center transition border border-blue-200" title="Звук">
+                <i id="soundIcon" class="fas fa-volume-up"></i>
+            </button>
+        </div>
+    </header>
+
+    <main class="w-full max-w-4xl relative min-h-[500px] sm:min-h-[580px] bg-gradient-to-b from-sky-200 via-sky-100 to-emerald-200 rounded-3xl shadow-2xl border-4 border-white overflow-hidden flex flex-col justify-between p-4 sm:p-6">
+        
+        <canvas id="confettiCanvas"></canvas>
+
+        <section id="screenIntro" class="flex flex-col items-center justify-center text-center my-auto z-10 py-6">
+            <!-- Kapcho Mascot SVG -->
+            <div class="relative mb-6 animate-float">
+                <svg class="w-36 h-36 sm:w-44 sm:h-44 drop-shadow-glow" viewBox="0 0 100 120">
+                    <!-- Drop Body -->
+                    <path d="M50 10 C 50 10, 10 70, 10 90 A 40 40 0 0 0 90 90 C 90 70, 50 10, 50 10 Z" fill="#3B82F6" stroke="#2563EB" stroke-width="3"/>
+                    <!-- Highlight -->
+                    <path d="M30 75 Q 25 85 35 95" fill="none" stroke="#93C5FD" stroke-width="4" stroke-linecap="round"/>
+                    <!-- Cute Eyes -->
+                    <circle cx="38" cy="70" r="5" fill="#1E293B"/>
+                    <circle cx="62" cy="70" r="5" fill="#1E293B"/>
+                    <circle cx="40" cy="68" r="2" fill="#FFFFFF"/>
+                    <circle cx="64" cy="68" r="2" fill="#FFFFFF"/>
+                    <!-- Cheeks -->
+                    <circle cx="30" cy="77" r="4" fill="#F472B6" opacity="0.7"/>
+                    <circle cx="70" cy="77" r="4" fill="#F472B6" opacity="0.7"/>
+                    <!-- Happy Smile -->
+                    <path d="M42 80 Q 50 90 58 80" fill="none" stroke="#1E293B" stroke-width="3.5" stroke-linecap="round"/>
+                </svg>
+                <div class="absolute -top-3 right-2 text-3xl animate-bounce">✨</div>
+            </div>
+
+            <h2 class="text-3xl sm:text-5xl font-extrabold text-blue-900 mb-3 drop-shadow-sm">
+                Здравей, аз съм <span class="text-blue-600">Капчо</span>!
+            </h2>
+            <p class="text-base sm:text-xl text-slate-700 max-w-lg mb-8 font-semibold leading-relaxed">
+                Готов ли си да поемем на вълнуващо пътешествие и да научим как водата се издига в небето и се връща обратно като дъжд?
+            </p>
+
+            <button onclick="startGame()" class="px-8 py-4 bg-gradient-to-r from-emerald-400 to-green-500 hover:from-emerald-500 hover:to-green-600 text-white font-black text-xl rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-1 active:translate-y-0 transition duration-200 border-b-4 border-green-700 flex items-center gap-3">
+                <span>Започни играта</span>
+                <i class="fas fa-play text-yellow-200"></i>
+            </button>
+        </section>
+
+        <section id="screenLevel1" class="hidden flex-col justify-between h-full z-10">
+            <div class="glass-card rounded-2xl p-4 shadow-md text-center max-w-xl mx-auto mb-4 border-l-8 border-amber-400">
+                <span class="bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Ниво 1: Изпарение</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">Слънцето грее силно! ☀️</h3>
+                <p class="text-sm text-slate-600">Кликни върху капчиците във водата, за да ги затоплиш и да полетят нагоре като водна пара!</p>
+            </div>
+
+            <div class="relative flex-grow min-h-[300px] flex flex-col justify-between rounded-2xl overflow-hidden border-2 border-sky-300 bg-gradient-to-b from-amber-100 via-sky-100 to-blue-400 shadow-inner">
+                <div class="absolute top-3 left-1/2 transform -translate-x-1/2 text-center cursor-pointer" onclick="playSunSound()">
+                    <div class="text-6xl sm:text-7xl animate-pulse-glow drop-shadow-sun">☀️</div>
+                    <span class="text-xs font-bold bg-amber-200/90 text-amber-900 px-2 py-0.5 rounded-full shadow">Топло Слънце</span>
+                </div>
+
+                <div id="steamContainer" class="absolute top-12 left-0 w-full h-40 pointer-events-none"></div>
+
+                <div class="mt-auto h-36 bg-gradient-to-r from-blue-500 via-cyan-500 to-blue-600 relative flex items-center justify-around px-6 overflow-hidden">
+                    <div id="riverDroplets" class="w-full flex justify-around items-center z-10">
+                        <!-- Water droplets inserted by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center bg-white/80 rounded-xl p-3 shadow">
+                <div class="text-sm font-bold text-blue-900">
+                    Превърнати капки в пара: <span id="l1Count" class="text-blue-600 text-lg">0</span> / 5
+                </div>
+                <button id="l1NextBtn" disabled onclick="finishLevel1()" class="px-6 py-2 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed transition shadow">
+                    Към Ниво 2 <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="screenLevel2" class="hidden flex-col justify-between h-full z-10">
+            <div class="glass-card rounded-2xl p-4 shadow-md text-center max-w-xl mx-auto mb-4 border-l-8 border-sky-400">
+                <span class="bg-sky-100 text-sky-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Ниво 2: Кондензация</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">Високо в небето е студено! ❄️</h3>
+                <p class="text-sm text-slate-600">Събери летящите невидими пара-капчици и ги свържи в един голям облак!</p>
+            </div>
+
+            <div class="relative flex-grow min-h-[320px] rounded-2xl overflow-hidden border-2 border-sky-300 bg-gradient-to-b from-indigo-200 via-sky-200 to-blue-300 shadow-inner flex items-center justify-center">
+                <div class="absolute top-4 left-4 text-sky-600 font-bold text-xs bg-white/70 px-3 py-1 rounded-full">❄️ Студен въздух</div>
+                <div class="absolute top-4 right-4 text-sky-600 font-bold text-xs bg-white/70 px-3 py-1 rounded-full">❄️ -5°C</div>
+
+                <div id="targetCloud" class="relative z-10 flex flex-col items-center justify-center transition-all duration-500 cursor-pointer p-4">
+                    <svg id="cloudSvg" class="w-44 h-28 sm:w-56 sm:h-36 transition-all duration-500 filter drop-shadow-md" viewBox="0 0 100 60">
+                        <path id="cloudPath" d="M20 45 A15 15 0 0 1 35 20 A20 20 0 0 1 70 20 A15 15 0 0 1 85 45 Z" fill="#FFFFFF" stroke="#CBD5E1" stroke-width="2"/>
+                    </svg>
+                    <span id="cloudLabel" class="mt-2 font-bold text-xs bg-white/90 text-slate-700 px-3 py-1 rounded-full shadow">Облак (0%)</span>
+                </div>
+
+                <div id="vaporParticlesArea" class="absolute inset-0 pointer-events-auto">
+                    <!-- Particles inserted by JS -->
+                </div>
+            </div>
+
+            <div class="mt-4 flex justify-between items-center bg-white/80 rounded-xl p-3 shadow">
+                <div class="text-sm font-bold text-indigo-900">
+                    Събрани капки в облака: <span id="l2Count" class="text-indigo-600 text-lg">0</span> / 6
+                </div>
+                <button id="l2NextBtn" disabled onclick="finishLevel2()" class="px-6 py-2 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed transition shadow">
+                    Към Ниво 3 <i class="fas fa-arrow-right ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="screenLevel3" class="hidden flex-col justify-between h-full z-10">
+            <div class="glass-card rounded-2xl p-4 shadow-md text-center max-w-xl mx-auto mb-2 border-l-8 border-blue-600">
+                <span class="bg-blue-100 text-blue-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Ниво 3: Валеж / Дъжд</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">Облакът стана много тежък! 🌧️</h3>
+                <p class="text-sm text-slate-600">Кликни върху тъмния облак, за да завали дъжд и да съживиш засъхналите цветя!</p>
+            </div>
+
+            <div id="rainArena" class="relative flex-grow min-h-[280px] rounded-2xl overflow-hidden border-2 border-blue-400 bg-gradient-to-b from-slate-400 via-sky-200 to-emerald-200 shadow-inner flex flex-col justify-between items-center p-4">
+                
+                <div onclick="triggerRainDrop()" class="cursor-pointer transform hover:scale-105 active:scale-95 transition text-center z-20">
+                    <div class="relative">
+                        <svg class="w-48 h-28 drop-shadow-xl" viewBox="0 0 100 60">
+                            <path d="M20 45 A15 15 0 0 1 35 18 A20 20 0 0 1 72 20 A15 15 0 0 1 85 45 Z" fill="#475569" stroke="#334155" stroke-width="2"/>
+                        </svg>
+                        <span class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-xs bg-slate-800/70 px-3 py-1 rounded-full pointer-events-none">
+                            Натисни облака 🌧️
+                        </span>
+                    </div>
+                </div>
+
+                <div id="raindropsZone" class="absolute inset-0 pointer-events-none overflow-hidden"></div>
+
+                <div class="w-full flex justify-around items-end z-10 pb-2">
+                    <div class="text-center cursor-pointer" onclick="triggerRainDrop()">
+                        <div id="flower1" class="text-4xl filter grayscale transition duration-500">🥀</div>
+                        <span class="text-[10px] bg-white/80 font-bold px-2 py-0.5 rounded text-slate-700">Засъхнало</span>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="triggerRainDrop()">
+                        <div id="flower2" class="text-4xl filter grayscale transition duration-500">🌱</div>
+                        <span class="text-[10px] bg-white/80 font-bold px-2 py-0.5 rounded text-slate-700">Жадно</span>
+                    </div>
+                    <div class="text-center cursor-pointer" onclick="triggerRainDrop()">
+                        <div id="flower3" class="text-4xl filter grayscale transition duration-500">🥀</div>
+                        <span class="text-[10px] bg-white/80 font-bold px-2 py-0.5 rounded text-slate-700">Засъхнало</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quiz Modal Overlay -->
+            <div id="quizModal" class="hidden absolute inset-0 bg-slate-900/60 backdrop-blur-sm z-30 flex items-center justify-center p-4">
+                <div class="glass-card bg-white rounded-3xl p-6 max-w-lg w-full shadow-2xl border-4 border-blue-400 text-center animate-bounce-soft">
+                    <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center text-2xl mx-auto mb-2 font-bold">
+                        ❓
+                    </div>
+                    <span class="text-xs font-extrabold text-blue-600 uppercase tracking-widest">Въпрос за значка "Майстор на дъжда"</span>
+                    <h3 class="text-lg sm:text-xl font-extrabold text-slate-800 my-3">
+                        По какъв начин водата от облаците се връща обратно на земята?
+                    </h3>
+
+                    <div class="space-y-2 text-left my-4">
+                        <button onclick="checkQuizAnswer('A')" class="w-full p-3 rounded-xl border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 font-bold text-slate-700 transition flex items-center gap-3">
+                            <span class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-sm font-black text-slate-600">A</span>
+                            <span>Чрез изпарение</span>
+                        </button>
+                        <button onclick="checkQuizAnswer('B')" class="w-full p-3 rounded-xl border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 font-bold text-slate-700 transition flex items-center gap-3">
+                            <span class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-sm font-black text-slate-600">Б</span>
+                            <span>Чрез дъжд (валеж)</span>
+                        </button>
+                        <button onclick="checkQuizAnswer('C')" class="w-full p-3 rounded-xl border-2 border-slate-200 hover:border-blue-400 hover:bg-blue-50 font-bold text-slate-700 transition flex items-center gap-3">
+                            <span class="w-7 h-7 bg-slate-100 rounded-lg flex items-center justify-center text-sm font-black text-slate-600">В</span>
+                            <span>Чрез вятър</span>
+                        </button>
+                    </div>
+
+                    <div id="quizFeedback" class="hidden p-3 rounded-xl font-bold text-sm mb-3"></div>
+
+                    <button id="quizNextBtn" disabled onclick="finishLevel3()" class="w-full py-3 bg-slate-300 text-slate-500 font-extrabold rounded-xl cursor-not-allowed transition shadow">
+                        Към Пъзела <i class="fas fa-arrow-right ml-1"></i>
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <section id="screenLevel4" class="hidden flex-col justify-between h-full z-10">
+            <div class="glass-card rounded-2xl p-4 shadow-md text-center max-w-xl mx-auto mb-3 border-l-8 border-purple-500">
+                <span class="bg-purple-100 text-purple-900 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">Ниво 4: Кръговрат на водата</span>
+                <h3 class="text-xl font-bold text-slate-800 mt-1">Подреди 4-те стъпки в правилен ред! 🧩</h3>
+                <p class="text-sm text-slate-600">Кликни върху две карти, за да размениш техните места!</p>
+            </div>
+
+            <div class="flex-grow flex flex-col justify-center">
+                <div id="puzzleGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-2xl mx-auto w-full">
+                    <!-- Cards shuffled dynamically -->
+                </div>
+            </div>
+
+            <div class="mt-4 flex flex-wrap justify-between items-center bg-white/90 rounded-2xl p-3 shadow gap-2">
+                <div id="puzzleStatus" class="text-sm font-bold text-purple-900">
+                    💡 Подреди: 1. Изпарение ➔ 2. Кондензация ➔ 3. Дъжд / Валеж ➔ 4. Събиране
+                </div>
+                <button onclick="verifyPuzzleOrder()" class="px-6 py-3 bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-extrabold rounded-xl shadow-lg transition">
+                    Провери подредбата <i class="fas fa-check-circle ml-1"></i>
+                </button>
+            </div>
+        </section>
+
+        <section id="screenVictory" class="hidden flex-col items-center justify-center text-center my-auto z-10 py-4">
+            <div class="glass-card bg-white/95 rounded-3xl p-6 sm:p-8 max-w-xl w-full shadow-2xl border-4 border-yellow-400 relative overflow-hidden">
+                <div class="text-6xl mb-2 animate-bounce">🏆</div>
+                <span class="bg-yellow-100 text-yellow-900 text-xs font-extrabold px-4 py-1 rounded-full uppercase tracking-widest border border-yellow-300">
+                    Официален Сертификат
+                </span>
+                
+                <h2 class="text-2xl sm:text-4xl font-extrabold text-blue-900 my-2">БРАВО, ИЗСЛЕДОВАТЕЛЮ!</h2>
+                <p class="text-slate-600 font-bold text-sm sm:text-base mb-4">
+                    Ти спечели званието <br><strong class="text-blue-600 text-lg sm:text-xl">„Майстор на дъжда и кръговрата“</strong>!
+                </p>
+
+                <div class="bg-blue-50/90 rounded-2xl p-4 my-4 border border-blue-200">
+                    <h4 class="text-xs font-bold text-blue-800 uppercase mb-2">Твоите спечелени значки:</h4>
+                    <div class="flex justify-center gap-3 text-3xl">
+                        <span class="p-2 bg-white rounded-xl shadow" title="Изпарение">☀️</span>
+                        <span class="p-2 bg-white rounded-xl shadow" title="Кондензация">☁️</span>
+                        <span class="p-2 bg-white rounded-xl shadow" title="Валеж / Дъжд">🌧️</span>
+                        <span class="p-2 bg-white rounded-xl shadow" title="Кръговрат">🔄</span>
+                    </div>
+                </div>
+
+                <button onclick="restartGame()" class="px-8 py-3 bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-extrabold text-lg rounded-xl shadow-lg hover:shadow-xl transition flex items-center justify-center gap-2 mx-auto">
+                    <i class="fas fa-redo"></i> Играй отново
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <div id="knowledgeModal" class="hidden fixed bottom-4 left-1/2 transform -translate-x-1/2 w-11/12 max-w-lg bg-white rounded-2xl p-4 shadow-2xl border-2 border-blue-400 z-50 animate-bounce-soft">
+        <div class="flex items-start gap-3">
+            <div class="text-3xl">💡</div>
+            <div class="flex-grow">
+                <h4 id="knowledgeTitle" class="font-bold text-blue-900 text-base">Знаеш ли че?</h4>
+                <p id="knowledgeText" class="text-xs sm:text-sm text-slate-700 mt-1"></p>
+            </div>
+            <button onclick="closeKnowledgeModal()" class="text-slate-400 hover:text-slate-600 font-bold text-lg">&times;</button>
+        </div>
+        <button onclick="closeKnowledgeModal()" class="mt-3 w-full py-2 bg-blue-600 text-white font-bold text-xs rounded-xl shadow">
+            Разбрах! Напред 🚀
+        </button>
+    </div>
+
+    <script>
+        let audioCtx = null;
+        let isMuted = false;
+
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (isMuted) return;
+            try {
+                initAudio();
+                const now = audioCtx.currentTime;
+
+                if (type === 'pop') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(300, now);
+                    osc.frequency.exponentialRampToValueAtTime(800, now + 0.1);
+                    gain.gain.setValueAtTime(0.3, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.1);
+                } else if (type === 'steam') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(160, now);
+                    osc.frequency.linearRampToValueAtTime(480, now + 0.3);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.3);
+                } else if (type === 'rain') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(650, now);
+                    osc.frequency.exponentialRampToValueAtTime(220, now + 0.15);
+                    gain.gain.setValueAtTime(0.25, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.15);
+                } else if (type === 'fanfare') {
+                    const notes = [261.63, 329.63, 392.00, 523.25];
+                    notes.forEach((freq, idx) => {
+                        const osc = audioCtx.createOscillator();
+                        const gain = audioCtx.createGain();
+                        osc.type = 'triangle';
+                        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
+                        gain.gain.setValueAtTime(0.2, now + idx * 0.1);
+                        gain.gain.exponentialRampToValueAtTime(0.001, now + idx * 0.1 + 0.3);
+                        osc.connect(gain);
+                        gain.connect(audioCtx.destination);
+                        osc.start(now + idx * 0.1);
+                        osc.stop(now + idx * 0.1 + 0.3);
+                    });
+                } else if (type === 'error') {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    osc.type = 'sawtooth';
+                    osc.frequency.setValueAtTime(180, now);
+                    osc.frequency.setValueAtTime(140, now + 0.1);
+                    gain.gain.setValueAtTime(0.2, now);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + 0.25);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(now);
+                    osc.stop(now + 0.25);
+                }
+            } catch (e) {
+                console.log("Audio disabled");
+            }
+        }
+
+        function toggleSound() {
+            isMuted = !isMuted;
+            const icon = document.getElementById('soundIcon');
+            if (isMuted) {
+                icon.className = 'fas fa-volume-mute text-slate-400';
+            } else {
+                icon.className = 'fas fa-volume-up text-blue-600';
+                playSound('pop');
+            }
+        }
+
+        function playSunSound() {
+            playSound('pop');
+        }
+
+        let currentLevel = 0;
+        let l1Collected = 0;
+        let l2Collected = 0;
+        let l3RainCount = 0;
+        let selectedPuzzleCardIndex = null;
+
+        const puzzleCorrectSequence = [
+            { id: 1, title: "1. Изпарение", desc: "Слънцето грее, водата се затопля и се издига като пара.", icon: "☀️" },
+            { id: 2, title: "2. Кондензация", desc: "Парата се охлажда в небето и образува облак.", icon: "☁️" },
+            { id: 3, title: "3. Дъжд / Валеж", desc: "Водата от облака пада обратно на земята като дъжд.", icon: "🌧️" },
+            { id: 4, title: "4. Събиране", desc: "Водата се събира отново в реките и езерата.", icon: "🌊" }
+        ];
+
+        let currentPuzzleItems = [];
+
+        function updateProgressUI() {
+            const bar = document.getElementById('progressBar');
+            const stepText = document.getElementById('levelStepText');
+            const subtitle = document.getElementById('levelSubtitle');
+
+            const percent = (currentLevel / 4) * 100;
+            bar.style.width = percent + '%';
+            stepText.textContent = `${currentLevel} / 4`;
+
+            const titles = [
+                "Начало на приключението",
+                "Ниво 1: Изпарение на водата",
+                "Ниво 2: Образуване на облаци",
+                "Ниво 3: Падане на дъжда",
+                "Ниво 4: Кръговратът на водата"
+            ];
+            subtitle.textContent = titles[currentLevel] || "Сертификат за победа";
+
+            for (let i = 1; i <= 4; i++) {
+                const b = document.getElementById(`badge${i}`);
+                if (i <= currentLevel) {
+                    b.classList.remove('opacity-30');
+                    b.classList.add('opacity-100', 'scale-110');
+                } else {
+                    b.classList.add('opacity-30');
+                    b.classList.remove('opacity-100', 'scale-110');
+                }
+            }
+        }
+
+        function showScreen(screenId) {
+            const screens = ['screenIntro', 'screenLevel1', 'screenLevel2', 'screenLevel3', 'screenLevel4', 'screenVictory'];
+            screens.forEach(s => {
+                const el = document.getElementById(s);
+                if (s === screenId) {
+                    el.classList.remove('hidden');
+                    el.classList.add('flex');
+                } else {
+                    el.classList.add('hidden');
+                    el.classList.remove('flex');
+                }
+            });
+        }
+
+        function startGame() {
+            initAudio();
+            playSound('pop');
+            currentLevel = 1;
+            updateProgressUI();
+            showScreen('screenLevel1');
+            initLevel1();
+        }
+
+        function initLevel1() {
+            l1Collected = 0;
+            document.getElementById('l1Count').textContent = '0';
+            const btn = document.getElementById('l1NextBtn');
+            btn.disabled = true;
+            btn.className = 'px-6 py-2 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed transition shadow';
+
+            const container = document.getElementById('riverDroplets');
+            container.innerHTML = '';
+
+            for (let i = 0; i < 5; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'cursor-pointer transform hover:scale-125 transition duration-200 animate-bounce-soft';
+                drop.style.animationDelay = `${i * 0.3}s`;
+                drop.innerHTML = `
+                    <div class="relative" onclick="evaporateDrop(this, ${i})">
+                        <svg class="w-12 h-14 drop-shadow" viewBox="0 0 100 120">
+                            <path d="M50 10 C 50 10, 10 70, 10 90 A 40 40 0 0 0 90 90 C 90 70, 50 10, 50 10 Z" fill="#3B82F6"/>
+                            <circle cx="38" cy="70" r="4" fill="#FFFFFF"/>
+                            <circle cx="62" cy="70" r="4" fill="#FFFFFF"/>
+                        </svg>
+                    </div>
+                `;
+                container.appendChild(drop);
+            }
+        }
+
+        function evaporateDrop(element, idx) {
+            playSound('steam');
+            element.style.pointerEvents = 'none';
+            element.style.opacity = '0.2';
+
+            const steamContainer = document.getElementById('steamContainer');
+            const bubble = document.createElement('div');
+            bubble.className = 'absolute steam-bubble text-2xl font-bold flex flex-col items-center';
+            bubble.style.left = `${15 + idx * 18}%`;
+            bubble.style.bottom = '10px';
+            bubble.innerHTML = `💨 <span class="text-[10px] bg-white/80 px-1 rounded font-bold text-sky-700">Пара</span>`;
+            steamContainer.appendChild(bubble);
+
+            l1Collected++;
+            document.getElementById('l1Count').textContent = l1Collected;
+
+            if (l1Collected >= 5) {
+                const btn = document.getElementById('l1NextBtn');
+                btn.disabled = false;
+                btn.className = 'px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl transition shadow-lg animate-bounce';
+                
+                showKnowledgeModal(
+                    "Какво се случи?",
+                    "Слънцето нагря водата в реката. Когато водата се затопли, тя се превръща във водна пара и се издига високо в небето. Този процес се нарича ИЗПАРЕНИЕ!"
+                );
+            }
+        }
+
+        function finishLevel1() {
+            playSound('pop');
+            currentLevel = 2;
+            updateProgressUI();
+            showScreen('screenLevel2');
+            initLevel2();
+        }
+
+        function initLevel2() {
+            l2Collected = 0;
+            document.getElementById('l2Count').textContent = '0';
+            const btn = document.getElementById('l2NextBtn');
+            btn.disabled = true;
+            btn.className = 'px-6 py-2 bg-slate-300 text-slate-500 font-bold rounded-xl cursor-not-allowed transition shadow';
+
+            updateCloudVisual(0);
+
+            const area = document.getElementById('vaporParticlesArea');
+            area.innerHTML = '';
+
+            const positions = [
+                { top: '15%', left: '15%' },
+                { top: '20%', left: '75%' },
+                { top: '65%', left: '10%' },
+                { top: '70%', left: '80%' },
+                { top: '10%', left: '45%' },
+                { top: '75%', left: '45%' }
+            ];
+
+            positions.forEach((pos, idx) => {
+                const particle = document.createElement('div');
+                particle.className = 'absolute cursor-pointer animate-float transition-all duration-300 transform hover:scale-125';
+                particle.style.top = pos.top;
+                particle.style.left = pos.left;
+                particle.style.animationDelay = `${idx * 0.4}s`;
+                particle.innerHTML = `
+                    <div onclick="collectVapor(this)" class="bg-white/80 border border-sky-300 px-3 py-1.5 rounded-full shadow-md flex items-center gap-1">
+                        <span class="text-lg">🌫️</span>
+                        <span class="text-xs font-bold text-sky-800">Пара</span>
+                    </div>
+                `;
+                area.appendChild(particle);
+            });
+        }
+
+        function collectVapor(element) {
+            playSound('pop');
+            element.parentElement.style.pointerEvents = 'none';
+            element.parentElement.style.transform = 'scale(0) rotate(180deg)';
+            element.parentElement.style.opacity = '0';
+
+            l2Collected++;
+            document.getElementById('l2Count').textContent = l2Collected;
+
+            updateCloudVisual(l2Collected);
+
+            if (l2Collected >= 6) {
+                const btn = document.getElementById('l2NextBtn');
+                btn.disabled = false;
+                btn.className = 'px-6 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl transition shadow-lg animate-bounce';
+
+                showKnowledgeModal(
+                    "Браво! Всички капки са в облака!",
+                    "Високо в небето е много студено! Водната пара се охлажда, превръща се отново в капчици и образува ОБЛАЦИТЕ (Кондензация)!"
+                );
+            }
+        }
+
+        function updateCloudVisual(count) {
+            const path = document.getElementById('cloudPath');
+            const label = document.getElementById('cloudLabel');
+            
+            const scale = 1 + (count * 0.08);
+            document.getElementById('cloudSvg').style.transform = `scale(${scale})`;
+
+            const shades = ["#FFFFFF", "#F1F5F9", "#E2E8F0", "#CBD5E1", "#94A3B8", "#64748B", "#475569"];
+            path.setAttribute('fill', shades[count] || shades[0]);
+            
+            const percent = Math.round((count / 6) * 100);
+            label.textContent = `Плътност на облака: ${percent}%`;
+        }
+
+        function finishLevel2() {
+            playSound('pop');
+            currentLevel = 3;
+            updateProgressUI();
+            showScreen('screenLevel3');
+            initLevel3();
+        }
+
+        function initLevel3() {
+            l3RainCount = 0;
+            document.getElementById('quizModal').classList.add('hidden');
+            document.getElementById('quizFeedback').classList.add('hidden');
+
+            for (let i = 1; i <= 3; i++) {
+                const fl = document.getElementById(`flower${i}`);
+                fl.className = "text-4xl filter grayscale transition duration-500";
+            }
+        }
+
+        function triggerRainDrop() {
+            playSound('rain');
+            l3RainCount++;
+
+            const zone = document.getElementById('raindropsZone');
+            for (let i = 0; i < 4; i++) {
+                const drop = document.createElement('div');
+                drop.className = 'absolute text-blue-500 text-xl font-bold';
+                drop.style.left = `${20 + Math.random() * 60}%`;
+                drop.style.top = '80px';
+                drop.style.animation = 'raindropFall 0.8s linear forwards';
+                drop.textContent = '💧';
+                zone.appendChild(drop);
+
+                setTimeout(() => drop.remove(), 850);
+            }
+
+            if (l3RainCount >= 2) {
+                const f1 = document.getElementById('flower1');
+                f1.className = "text-5xl filter-none transition duration-500 transform scale-110 animate-bounce-soft";
+                f1.textContent = '🌸';
+            }
+            if (l3RainCount >= 4) {
+                const f2 = document.getElementById('flower2');
+                f2.className = "text-5xl filter-none transition duration-500 transform scale-110 animate-bounce-soft";
+                f2.textContent = '🌻';
+            }
+            if (l3RainCount >= 6) {
+                const f3 = document.getElementById('flower3');
+                f3.className = "text-5xl filter-none transition duration-500 transform scale-110 animate-bounce-soft";
+                f3.textContent = '🌺';
+
+                setTimeout(() => {
+                    document.getElementById('quizModal').classList.remove('hidden');
+                    playSound('fanfare');
+                }, 600);
+            }
+        }
+
+        function checkQuizAnswer(option) {
+            const feedback = document.getElementById('quizFeedback');
+            const nextBtn = document.getElementById('quizNextBtn');
+            feedback.classList.remove('hidden');
+
+            if (option === 'B') {
+                playSound('fanfare');
+                feedback.className = "p-3 rounded-xl font-bold text-sm mb-3 bg-emerald-100 text-emerald-900 border border-emerald-300";
+                feedback.innerHTML = `
+                    🎉 ВЯРНО! Когато капките в облака станат твърде тежки, те падат обратно на земята под формата на ДЪЖД (Валеж).
+                `;
+                nextBtn.disabled = false;
+                nextBtn.className = 'w-full py-3 bg-emerald-500 hover:bg-emerald-600 text-white font-extrabold rounded-xl transition shadow-lg animate-bounce';
+            } else {
+                playSound('error');
+                feedback.className = "p-3 rounded-xl font-bold text-sm mb-3 bg-rose-100 text-rose-900 border border-rose-300";
+                feedback.innerHTML = `
+                    ❌ Опитай пак! Помни: Водата пада от облаците към земята под формата на ДЪЖД!
+                `;
+            }
+        }
+
+        function finishLevel3() {
+            playSound('pop');
+            currentLevel = 4;
+            updateProgressUI();
+            showScreen('screenLevel4');
+            initLevel4();
+        }
+
+        function initLevel4() {
+            selectedPuzzleCardIndex = null;
+            currentPuzzleItems = [...puzzleCorrectSequence].sort(() => Math.random() - 0.5);
+            renderPuzzleGrid();
+        }
+
+        function renderPuzzleGrid() {
+            const grid = document.getElementById('puzzleGrid');
+            grid.innerHTML = '';
+
+            currentPuzzleItems.forEach((item, index) => {
+                const card = document.createElement('div');
+                const isSelected = selectedPuzzleCardIndex === index;
+                
+                card.className = `p-4 rounded-2xl border-2 cursor-pointer transition shadow-md flex items-center gap-3 ${
+                    isSelected ? 'border-purple-600 bg-purple-100 scale-105 ring-4 ring-purple-300' : 'border-slate-200 bg-white hover:border-purple-300 hover:bg-purple-50'
+                }`;
+
+                card.onclick = () => handlePuzzleCardClick(index);
+
+                card.innerHTML = `
+                    <div class="w-12 h-12 bg-purple-200 text-purple-900 rounded-xl flex items-center justify-center text-2xl font-bold shrink-0">
+                        ${item.icon}
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-sm sm:text-base">${item.title}</h4>
+                        <p class="text-xs text-slate-600">${item.desc}</p>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+        }
+
+        function handlePuzzleCardClick(index) {
+            playSound('pop');
+            if (selectedPuzzleCardIndex === null) {
+                selectedPuzzleCardIndex = index;
+            } else if (selectedPuzzleCardIndex === index) {
+                selectedPuzzleCardIndex = null;
+            } else {
+                const temp = currentPuzzleItems[selectedPuzzleCardIndex];
+                currentPuzzleItems[selectedPuzzleCardIndex] = currentPuzzleItems[index];
+                currentPuzzleItems[index] = temp;
+                selectedPuzzleCardIndex = null;
+            }
+            renderPuzzleGrid();
+        }
+
+        function verifyPuzzleOrder() {
+            let isCorrect = true;
+            for (let i = 0; i < currentPuzzleItems.length; i++) {
+                if (currentPuzzleItems[i].id !== puzzleCorrectSequence[i].id) {
+                    isCorrect = false;
+                    break;
+                }
+            }
+
+            const status = document.getElementById('puzzleStatus');
+
+            if (isCorrect) {
+                playSound('fanfare');
+                status.className = "text-sm font-bold text-emerald-700 bg-emerald-100 px-3 py-1 rounded-lg";
+                status.textContent = "🎉 Браво! Кръговратът на водата е подреден правилно!";
+                
+                setTimeout(() => {
+                    showVictoryScreen();
+                }, 1000);
+            } else {
+                playSound('error');
+                status.className = "text-sm font-bold text-rose-700 bg-rose-100 px-3 py-1 rounded-lg";
+                status.textContent = "❌ Има грешка! Натисни две карти, за да размениш техните места.";
+            }
+        }
+
+        function showVictoryScreen() {
+            currentLevel = 4;
+            updateProgressUI();
+            showScreen('screenVictory');
+            startConfetti();
+        }
+
+        function restartGame() {
+            stopConfetti();
+            currentLevel = 0;
+            updateProgressUI();
+            showScreen('screenIntro');
+        }
+
+        function showKnowledgeModal(title, text) {
+            document.getElementById('knowledgeTitle').textContent = title;
+            document.getElementById('knowledgeText').textContent = text;
+            document.getElementById('knowledgeModal').classList.remove('hidden');
+            playSound('fanfare');
+        }
+
+        function closeKnowledgeModal() {
+            document.getElementById('knowledgeModal').classList.add('hidden');
+        }
+
+        let confettiInterval = null;
+        function startConfetti() {
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+
+            const particles = [];
+            const colors = ['#3B82F6', '#10B981', '#F59E0B', '#EC4899', '#8B5CF6'];
+
+            for (let i = 0; i < 70; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height - canvas.height,
+                    r: Math.random() * 6 + 4,
+                    d: Math.random() * 10,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    tilt: Math.floor(Math.random() * 10) - 10,
+                    tiltAngleIncremental: Math.random() * 0.07 + 0.05,
+                    tiltAngle: 0
+                });
+            }
+
+            function draw() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                particles.forEach((p) => {
+                    ctx.beginPath();
+                    ctx.lineWidth = p.r;
+                    ctx.strokeStyle = p.color;
+                    ctx.moveTo(p.x + p.tilt + p.r / 2, p.y);
+                    ctx.lineTo(p.x + p.tilt, p.y + p.tilt + p.r / 2);
+                    ctx.stroke();
+
+                    p.tiltAngle += p.tiltAngleIncremental;
+                    p.y += (Math.cos(p.d) + 3 + p.r / 2) / 2;
+                    p.tilt = Math.sin(p.tiltAngle) * 15;
+
+                    if (p.y > canvas.height) {
+                        p.y = -10;
+                        p.x = Math.random() * canvas.width;
+                    }
+                });
+            }
+
+            if (confettiInterval) clearInterval(confettiInterval);
+            confettiInterval = setInterval(draw, 20);
+        }
+
+        function stopConfetti() {
+            if (confettiInterval) clearInterval(confettiInterval);
+            const canvas = document.getElementById('confettiCanvas');
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+        }
+    </script>
+</body>
+</html>
